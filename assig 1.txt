@@ -1,0 +1,44 @@
+val rdd1 = sc.textFile("/user/cloudera/testlog.txt")
+
+rdd1.collect
+
+val rdd2 = rdd1.filter(x => x.endsWith("invoke") && (x.contains("AM") || x.contains("PM")))
+
+rdd2.count
+
+rdd2.foreach(println)
+
+val rdd3 = rdd2.map(x => (x.substring(0,12),x.substring(13,24)))
+rdd3.foreach(println)
+
+val rdd4 = rdd1.filter(x => x.contains("Exception:"))
+
+rdd4.count
+
+val rdd5 = rdd4.map(x => x.split(":")(0))
+rdd5.foreach(println)
+
+val rdd6 = rdd3.zip(rdd5)
+
+rdd6.foreach(println)
+
+val rdd7 = rdd6.map{case ((date,time),exception) => (date,time,exception)}
+
+rdd7.foreach(println)
+
+rdd7.map(x => x._1).foreach(println)
+
+val df1 = rdd7.toDF("date","time","error")
+	
+df1.show
+
+df1.registerAsTempTable("exceptionTable")
+sqlContext.sql("select * from exceptionTable").show
+
+sqlContext.sql("select * from exceptionTable order by error").rdd.saveAsTextFile("/user/cloudera/exceptionTable1")
+
+sqlContext.sql("select * from exceptionTable order by error").rdd.coalesce(1).saveAsTextFile("/user/cloudera/exceptionTable2")
+
+
+
+
